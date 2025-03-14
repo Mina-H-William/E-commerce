@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35222.181
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gates-of-Egypt", "Gates-of-Egypt\Gates-of-Egypt.csproj", "{7118D33A-42EB-4340-8A70-3C5C3EAAF23B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7118D33A-42EB-4340-8A70-3C5C3EAAF23B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7118D33A-42EB-4340-8A70-3C5C3EAAF23B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7118D33A-42EB-4340-8A70-3C5C3EAAF23B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7118D33A-42EB-4340-8A70-3C5C3EAAF23B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AF2B52A7-75D6-4B0F-A769-FC169ACEB248}
+	EndGlobalSection
+EndGlobal

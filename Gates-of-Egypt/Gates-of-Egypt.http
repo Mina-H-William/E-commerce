@@ -1,0 +1,6 @@
+@Gates_of_Egypt_HostAddress = http://localhost:5290
+
+GET {{Gates_of_Egypt_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
