@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -21,27 +22,55 @@ namespace Gates_of_Egypt
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql(connectionString));
 
-            // Configure JWT Settings
-            var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-            var secretKey = jwtSettings.GetValue<string>("SecretKey")
-                ?? throw new ArgumentNullException("SecretKey is missing in appsettings.json");
-
-            var key = Encoding.UTF8.GetBytes(secretKey);
-
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
+            .AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = false;
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    options.TokenValidationParameters = new TokenValidationParameters
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtConfig:Key"] ?? " ")),
+                    ValidateIssuer = true,
+                    ValidIssuer = builder.Configuration["JwtConfig:Issuer"],
+                    ValidateAudience = true,
+                    ValidAudience = builder.Configuration["JwtConfig:Audience"],
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero // Ensures immediate expiration check
+                };
+
+                // **Enable error logging**
+                options.Events = new JwtBearerEvents
+                {
+                    OnAuthenticationFailed = context =>
                     {
-                        ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(key),
-                        ValidateIssuer = true,
-                        ValidateAudience = true,
-                        ValidateLifetime = true,
-                        ValidIssuer = jwtSettings.GetValue<string>("Issuer"),
-                        ValidAudience = jwtSettings.GetValue<string>("Audience")
-                    };
+                        Console.WriteLine($"JWT Authentication Failed: {context.Exception.Message}");
+                        return Task.CompletedTask;
+                    },
+                    OnTokenValidated = context =>
+                    {
+                        Console.WriteLine("JWT Token successfully validated.");
+                        return Task.CompletedTask;
+                    },
+                    OnChallenge = context =>
+                    {
+                        Console.WriteLine($"JWT Challenge Error: {context.Error}, {context.ErrorDescription}");
+                        return Task.CompletedTask;
+                    }
+                };
+            });
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", builder =>
+                {
+                    builder.AllowAnyOrigin()
+                           .AllowAnyMethod()
+                           .AllowAnyHeader();
                 });
+            });
+
+            builder.Services.AddAuthorization();
 
             var app = builder.Build();
 

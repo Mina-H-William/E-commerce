@@ -57,6 +57,16 @@ namespace Gates_of_Egypt.Controllers
             return Ok(new { token });
         }
 
+        // Get: api/users/getall
+        [HttpGet("getall")]
+        [Authorize]
+        public async Task<IActionResult> GetUsers()
+        {
+            // get all the user emails and return them 
+            var users = await _context.Users.ToListAsync();
+            return Ok(users.Select(u => u.Email));
+        }
+
         // GET: api/users/{id}
         [HttpGet("{id}")]
         [Authorize]
@@ -86,25 +96,36 @@ namespace Gates_of_Egypt.Controllers
 
         private string GenerateJwtToken(User user)
         {
-            var jwtSettings = _configuration.GetSection("JwtSettings");
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]));
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var keyString = _configuration["JwtConfig:Key"];
 
-            var claims = new[]
+            if (string.IsNullOrEmpty(keyString))
             {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim(JwtRegisteredClaimNames.UniqueName, user.FullName)
-        };
+                throw new InvalidOperationException("JWT secret key is missing from configuration.");
+            }
 
-            var token = new JwtSecurityToken(
-                issuer: jwtSettings["Issuer"],
-                audience: jwtSettings["Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(120),
-                signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
-            );
+            var key = Encoding.UTF8.GetBytes(keyString);
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            // Read expiration time from appsettings.json
+            int expirationMinutes = int.TryParse(_configuration["JwtConfig:ExpirationInMinutes"], out int minutes) ? minutes : 120;
+            var expirationTime = DateTime.UtcNow.AddMinutes(expirationMinutes);
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim(ClaimTypes.Name, user.FullName),
+                    new Claim(ClaimTypes.Email, user.Email)
+                }),
+                Expires = expirationTime,
+                Issuer = _configuration["JwtConfig:Issuer"],  // Ensure these are set in appsettings.json
+                Audience = _configuration["JwtConfig:Audience"],
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
+            };
+
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
         }
     }
 }
