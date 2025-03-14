@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Text;
 
 namespace Gates_of_Egypt
@@ -15,7 +16,28 @@ namespace Gates_of_Egypt
             // Add controllers and Swagger
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(Options =>
+            {
+                var jwtSecurityScheme = new OpenApiSecurityScheme
+                {
+                    BearerFormat = "JWT",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.Http,
+                    Scheme = JwtBearerDefaults.AuthenticationScheme,
+                    Description = "Enter your JWT Access Token",
+                    Reference = new OpenApiReference
+                    {
+                        Id = JwtBearerDefaults.AuthenticationScheme,
+                        Type = ReferenceType.SecurityScheme
+                    }
+                };
+                Options.AddSecurityDefinition("Bearer", jwtSecurityScheme);
+                Options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                        { jwtSecurityScheme, Array.Empty<string>() }
+                });
+            });
 
             // Configure PostgreSQL Database
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -50,11 +72,6 @@ namespace Gates_of_Egypt
                     OnTokenValidated = context =>
                     {
                         Console.WriteLine("JWT Token successfully validated.");
-                        return Task.CompletedTask;
-                    },
-                    OnChallenge = context =>
-                    {
-                        Console.WriteLine($"JWT Challenge Error: {context.Error}, {context.ErrorDescription}");
                         return Task.CompletedTask;
                     }
                 };
