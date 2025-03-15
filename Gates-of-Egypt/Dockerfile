@@ -25,6 +25,8 @@ RUN dotnet publish "./Gates-of-Egypt.csproj" -c $BUILD_CONFIGURATION -o /app/pub
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
+# Set environment variable to listen on all interfaces
+ENV DOTNET_URLS="http://0.0.0.0:8080"
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "Gates-of-Egypt.dll"]
