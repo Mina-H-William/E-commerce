@@ -1,0 +1,7 @@
+FROM postgres:16
+
+# Set environment variables (can also be set in docker-compose.yml)
+ENV POSTGRES_PASSWORD=admin
+
+# Expose PostgreSQL port
+EXPOSE 5432
